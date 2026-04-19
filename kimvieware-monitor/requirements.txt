@@ -1,0 +1,2 @@
+-e ../kimvieware-shared
+python-dotenv

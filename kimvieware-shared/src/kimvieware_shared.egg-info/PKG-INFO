@@ -1,0 +1,60 @@
+Metadata-Version: 2.4
+Name: kimvieware-shared
+Version: 0.1.0
+Summary: Shared libraries for KIMVIEware platform
+Home-page: https://github.com/KIMVIEware-System/kimvieware-shared
+Author: Flavie Ndemafo
+Author-email: davila.ndemafo@facsciences-uy1.cm
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Testing
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pika>=1.3.2
+Requires-Dist: pymongo>=4.6.1
+Requires-Dist: redis>=5.0.1
+Requires-Dist: pydantic>=2.5.0
+Requires-Dist: prometheus-client>=0.19.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# KIMVIware Shared Library
+
+This package contains the shared libraries and data models for the KIMVIware platform. It provides common functionality for all microservices, including:
+
+*   **MicroserviceBase**: A base class for creating RabbitMQ-based microservices.
+*   **Data Models**: Pydantic models for jobs, SUTs, trajectories, etc.
+*   **Utilities**: Common utilities for interacting with MongoDB, Redis, and other services.
+
+## Installation
+
+This package is intended to be installed in editable mode from the root of each service that uses it. This ensures that all services are using the same version of the shared code.
+
+To install the library, navigate to the `kimvieware-shared` directory and run:
+
+```bash
+pip install -e .
+```
+
+This will install the package in editable mode, so any changes to the shared library will be immediately available to the services that use it.
+
+## Dependencies
+
+The shared library has the following dependencies:
+
+*   `pika`: RabbitMQ client
+*   `pymongo`: MongoDB client
+*   `redis`: Redis client
+*   `pydantic`: Data validation and settings management
+*   `prometheus-client`: Prometheus instrumentation client
+
+These dependencies are automatically installed when you install the `kimvieware-shared` package.

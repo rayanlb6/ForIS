@@ -1,0 +1,3 @@
+-e ../kimvieware-shared
+numpy>=1.24.0
+scipy>=1.11.0

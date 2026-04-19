@@ -1,0 +1,135 @@
+
+
+services:
+  # ===== MESSAGE BROKER =====
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: kimvieware_rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"      # AMQP protocol
+      - "15672:15672"    # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: kimvie2025
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    networks:
+      - kimvieware_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ===== DATABASE =====
+  mongodb:
+    image: mongo:7.0
+    container_name: kimvieware_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: kimvie2025
+      MONGO_INITDB_DATABASE: kimvieware
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - kimvieware_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ===== OBJECT STORAGE =====
+  minio:
+    image: minio/minio:latest
+    container_name: kimvieware_minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"      # S3 API
+      - "9001:9001"      # Web Console
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: kimvie2025
+    volumes:
+      - minio_data:/data
+    networks:
+      - kimvieware_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ===== CACHE =====
+  redis:
+    image: redis:7.2-alpine
+    container_name: kimvieware_redis
+    command: redis-server --requirepass kimvie2025
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - kimvieware_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ===== MONITORING =====
+  mongodb_exporter:
+    image: percona/mongodb_exporter:0.39
+    container_name: kimvieware_mongodb_exporter
+    command: --mongodb.uri="mongodb://admin:kimvie2025@mongodb:27017"
+    ports:
+      - "9216:9216"
+    networks:
+      - kimvieware_network
+    restart: unless-stopped
+
+  kimvieware-monitor:
+    build:
+      context: ../kimvieware-monitor # Path to the monitor service directory
+      dockerfile: Dockerfile
+    container_name: kimvieware_monitor
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: kimvie2025
+      MONGO_HOST: mongodb
+      MONGO_USER: admin
+      MONGO_PASS: kimvie2025
+      EXTRACTOR_MAX_PATHS: 1000 # Example value, can be configured
+    networks:
+      - kimvieware_network
+    depends_on:
+      - rabbitmq
+      - mongodb
+    restart: unless-stopped
+
+# ===== VOLUMES =====
+volumes:
+  rabbitmq_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  minio_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ===== NETWORK =====
+networks:
+  kimvieware_network:
+    driver: bridge
